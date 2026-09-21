@@ -10,7 +10,6 @@
     "not_found_handling": "single-page-application"
   },
   "vars": {
-    "APP_ORIGIN": "http://localhost:5173",
     "OIDC_ISSUER": "https://api.id.maximum.vc",
     "OIDC_AUTHORIZATION_URL": "https://api.id.maximum.vc/oauth/authorize",
     "OIDC_TOKEN_URL": "https://api.id.maximum.vc/oauth/access-token",
@@ -20,6 +19,7 @@
     {
       "binding": "DB",
       "database_name": "oauth-board",
+      // ローカル開発用。本番公開前に実際のD1 IDへ置き換えること。
       "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "drizzle"
     }

@@ -2,6 +2,10 @@ import { createRemoteJWKSet, jwtVerify } from "jose";
 import type { SessionUser } from "../../schema/entity/session.ts";
 import type { Config } from "../config.ts";
 
+function nonEmptyString(value: unknown): string | undefined {
+  return typeof value === "string" ? value.trim() || undefined : undefined;
+}
+
 export function createMaximumIdp(config: Config) {
   const jwks = createRemoteJWKSet(new URL(config.jwksUrl));
   const callback = `${config.origin}/auth/callback`;
@@ -120,14 +124,18 @@ export function createMaximumIdp(config: Config) {
           picture,
           id: JSON.stringify([payload.iss, payload.sub]),
           displayId:
-            typeof payload.preferred_username === "string" &&
-            payload.preferred_username.trim()
-              ? payload.preferred_username.trim()
-              : null,
+            nonEmptyString(
+              "preferred_username" in profile
+                ? profile.preferred_username
+                : undefined,
+            ) ??
+            nonEmptyString(payload.preferred_username) ??
+            null,
           name:
-            typeof payload.name === "string" && payload.name.trim()
-              ? payload.name.slice(0, 100)
-              : "Maximum メンバー",
+            (
+              nonEmptyString("name" in profile ? profile.name : undefined) ??
+              nonEmptyString(payload.name)
+            )?.slice(0, 100) ?? "Maximum メンバー",
         };
       } catch (error) {
         const name = error instanceof Error ? error.name : "UnknownError";
