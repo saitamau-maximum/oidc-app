@@ -6,6 +6,7 @@ const base64url = (bytes: Uint8Array) =>
 
 export const random = () =>
   base64url(crypto.getRandomValues(new Uint8Array(32)));
+
 export const hash = async (value: string) =>
   base64url(
     new Uint8Array(

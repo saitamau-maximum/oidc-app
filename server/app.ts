@@ -17,8 +17,10 @@ export function createApp() {
       "Content-Security-Policy",
       "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
     );
+
     const origin = c.env.APP_ORIGIN;
     const url = new URL(origin);
+
     if (
       url.origin !== origin ||
       (url.protocol !== "https:" &&
@@ -29,6 +31,7 @@ export function createApp() {
     ) {
       throw new Error("Invalid APP_ORIGIN");
     }
+
     c.set("config", {
       origin,
       clientId: c.env.OIDC_CLIENT_ID ?? "",
@@ -38,13 +41,16 @@ export function createApp() {
       tokenUrl: c.env.OIDC_TOKEN_URL,
       jwksUrl: c.env.OIDC_JWKS_URL,
     });
+
     c.set("repositories", createRepositories(c.env.DB));
+
     if (
       !["GET", "HEAD", "OPTIONS"].includes(c.req.method) &&
       c.req.header("Origin") !== origin
     ) {
       return c.json({ error: "リクエスト元を確認できません。" }, 403);
     }
+
     await next();
   });
 
@@ -78,5 +84,6 @@ export function createApp() {
   app.onError((_error, c) =>
     c.json({ error: "処理に失敗しました。再度お試しください。" }, 500),
   );
+
   return app;
 }

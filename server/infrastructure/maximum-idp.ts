@@ -7,8 +7,10 @@ function nonEmptyString(value: unknown): string | undefined {
 }
 
 export function createMaximumIdp(config: Config) {
+  // JWKS: { keys: [...] }
   const jwks = createRemoteJWKSet(new URL(config.jwksUrl));
   const callback = `${config.origin}/auth/callback`;
+
   return {
     async authenticate(
       code: string,
@@ -16,6 +18,7 @@ export function createMaximumIdp(config: Config) {
       nonce: string,
     ): Promise<SessionUser> {
       let stage = "token_request";
+
       try {
         const response = await fetch(config.tokenUrl, {
           method: "POST",
@@ -33,12 +36,14 @@ export function createMaximumIdp(config: Config) {
             code_verifier: verifier,
           }),
         });
+
         if (!response.ok) {
           const body: unknown = await response.json().catch(() => null);
           const code =
             body && typeof body === "object" && "error" in body
               ? body.error
               : undefined;
+
           console.warn("[oidc] token exchange failed", {
             status: response.status,
             code:
@@ -55,18 +60,25 @@ export function createMaximumIdp(config: Config) {
                 ? code
                 : "unknown_error",
           });
+
           throw new Error("Token exchange failed");
         }
+
         stage = "token_response_json";
+
+        // 成功時: { id_token: string, access_token: string }
         const tokens = (await response.json()) as {
           id_token?: string;
           access_token?: string;
         };
+
         if (typeof tokens.id_token !== "string") {
           console.warn("[oidc] missing ID token");
           throw new Error("Missing ID token");
         }
+
         stage = "id_token_verification";
+
         const { payload } = await jwtVerify(tokens.id_token, jwks, {
           issuer: config.issuer,
           audience: config.clientId,
@@ -74,6 +86,7 @@ export function createMaximumIdp(config: Config) {
           requiredClaims: ["sub", "iat", "exp", "nonce"],
           maxTokenAge: "10m",
         });
+
         if (
           !payload.sub ||
           payload.nonce !== nonce ||
@@ -85,9 +98,12 @@ export function createMaximumIdp(config: Config) {
           console.warn("[oidc] invalid subject, nonce or authorized party");
           throw new Error("Invalid claims");
         }
+
         stage = "userinfo_request";
+
         if (typeof tokens.access_token !== "string" || !tokens.access_token)
           throw new Error("Missing access token");
+
         const profileResponse = await fetch(
           new URL("/oauth/resources/userinfo", config.issuer),
           {
@@ -96,13 +112,17 @@ export function createMaximumIdp(config: Config) {
             redirect: "manual",
           },
         );
+
         if (!profileResponse.ok) {
           console.warn("[oidc] userinfo request failed", {
             status: profileResponse.status,
           });
           throw new Error("UserInfo request failed");
         }
+
+        // 成功時: { sub: string, name?: string, preferred_username?: string, picture?: string }
         const profile: unknown = await profileResponse.json();
+
         if (
           !profile ||
           typeof profile !== "object" ||
@@ -110,16 +130,20 @@ export function createMaximumIdp(config: Config) {
           profile.sub !== payload.sub
         )
           throw new Error("UserInfo subject mismatch");
+
         let picture: string | null = null;
+
         if ("picture" in profile && typeof profile.picture === "string") {
           try {
             const url = new URL(profile.picture);
+
             if (url.protocol === "https:" && !url.username && !url.password)
               picture = url.href;
           } catch {
             /* Missing or invalid image URLs use the initials avatar. */
           }
         }
+
         return {
           picture,
           id: JSON.stringify([payload.iss, payload.sub]),
@@ -139,6 +163,7 @@ export function createMaximumIdp(config: Config) {
         };
       } catch (error) {
         const name = error instanceof Error ? error.name : "UnknownError";
+
         console.warn("[oidc] provider operation failed", {
           stage,
           errorType: [
@@ -155,6 +180,7 @@ export function createMaximumIdp(config: Config) {
             ? name
             : "OtherError",
         });
+
         throw error;
       }
     },

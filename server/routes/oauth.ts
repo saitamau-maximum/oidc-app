@@ -68,6 +68,7 @@ export function createOAuthRouter() {
       sameSite: "Lax" as const,
       path: "/",
     };
+
     const id = cookie(c, "board_flow");
 
     deleteCookie(c, "board_flow", options);
@@ -75,6 +76,7 @@ export function createOAuthRouter() {
     const flow = id
       ? await repositories.oauth.consumeFlow(await hash(id))
       : undefined;
+
     const state = c.req.query("state");
     const code = c.req.query("code");
 
@@ -93,19 +95,24 @@ export function createOAuthRouter() {
         hasCode: Boolean(code),
         hasProviderError: Boolean(c.req.query("error")),
       });
+
       return c.redirect("/login?error=authentication");
     }
 
     let stage = "provider_authentication";
+
     try {
       const current = await createMaximumIdp(config).authenticate(
         code,
         flow.verifier,
         flow.nonce,
       );
+
       stage = "session_creation";
+
       const old = cookie(c, "board_session");
       const session = random();
+
       await repositories.sessions.replace(
         {
           id: await hash(session),
@@ -117,7 +124,9 @@ export function createOAuthRouter() {
         },
         old ? await hash(old) : undefined,
       );
+
       setCookie(c, "board_session", session, { ...options, maxAge: 28_800 });
+
       return c.redirect("/my-page");
     } catch (error) {
       console.warn("[oidc] authentication failed", {
@@ -132,6 +141,7 @@ export function createOAuthRouter() {
             ? error.claim
             : undefined,
       });
+
       return c.redirect("/login?error=authentication");
     }
   });
@@ -150,5 +160,6 @@ export function createOAuthRouter() {
 
     return c.body(null, 204);
   });
+
   return router;
 }

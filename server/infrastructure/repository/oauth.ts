@@ -32,6 +32,7 @@ export class CloudflareOAuthRepository implements IOAuthRepository {
       .delete(flows)
       .where(eq(flows.id, id))
       .returning();
+
     return flow;
   }
 }

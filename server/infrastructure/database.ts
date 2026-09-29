@@ -4,4 +4,5 @@ import * as schema from "../db/schema.ts";
 
 export const createDatabase = (binding: D1Database) =>
   drizzle(binding, { schema });
+
 export type Database = ReturnType<typeof createDatabase>;

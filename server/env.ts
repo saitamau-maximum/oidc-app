@@ -13,7 +13,11 @@ export type Bindings = {
   OIDC_TOKEN_URL: string;
   OIDC_JWKS_URL: string;
 };
+
 export type AppEnv = {
   Bindings: Bindings;
-  Variables: { repositories: Repositories; config: Config };
+  Variables: {
+    repositories: Repositories;
+    config: Config;
+  };
 };

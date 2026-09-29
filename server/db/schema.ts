@@ -1,5 +1,8 @@
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+// ここについては以下の講義資料を見ること
+// https://course.maximum.vc/course/7cdd8286-b567-42cf-af02-f48c00cf7ec7/section/5d5681bf-0e4b-41b1-9762-f9440e9b660f
+
 export const sessions = sqliteTable(
   "sessions",
   {

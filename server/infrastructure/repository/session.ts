@@ -27,6 +27,7 @@ export class CloudflareSessionRepository implements ISessionRepository {
 
   async replace(session: Session, previousId?: string): Promise<void> {
     const insert = this.client.insert(sessions).values(session);
+
     if (previousId) {
       await this.client.batch([
         this.client.delete(sessions).where(eq(sessions.id, previousId)),
